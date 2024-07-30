@@ -1,18 +1,68 @@
 //! Simple winit application.
 #![allow(warnings)]
 
+mod model;
+use crate::model::{Normal, Position, INDICES, NORMALS, POSITIONS};
+
+use glam::{
+    f32::{Mat3, Vec3},
+    Mat4,
+};
+use std::{error::Error, sync::Arc, time::Instant};
+use vulkano::{
+    buffer::{
+        allocator::{SubbufferAllocator, SubbufferAllocatorCreateInfo},
+        Buffer, BufferCreateInfo, BufferUsage,
+    },
+    command_buffer::{
+        allocator::StandardCommandBufferAllocator, CommandBufferBeginInfo, CommandBufferLevel,
+        CommandBufferUsage, RecordingCommandBuffer, RenderPassBeginInfo,
+    },
+    descriptor_set::{
+        allocator::StandardDescriptorSetAllocator, DescriptorSet, WriteDescriptorSet,
+    },
+    device::{
+        physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned,
+        QueueCreateInfo, QueueFlags,
+    },
+    format::Format,
+    image::{view::ImageView, Image, ImageCreateInfo, ImageType, ImageUsage},
+    instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
+    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator},
+    pipeline::{
+        graphics::{
+            color_blend::{ColorBlendAttachmentState, ColorBlendState},
+            depth_stencil::{DepthState, DepthStencilState},
+            input_assembly::InputAssemblyState,
+            multisample::MultisampleState,
+            rasterization::RasterizationState,
+            vertex_input::{Vertex, VertexDefinition},
+            viewport::{Viewport, ViewportState},
+            GraphicsPipelineCreateInfo,
+        },
+        layout::PipelineDescriptorSetLayoutCreateInfo,
+        GraphicsPipeline, Pipeline, PipelineBindPoint, PipelineLayout,
+        PipelineShaderStageCreateInfo,
+    },
+    render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass},
+    shader::EntryPoint,
+    swapchain::{
+        acquire_next_image, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
+    },
+    sync::{self, GpuFuture},
+    Validated, VulkanError, VulkanLibrary,
+};
+
 use std::collections::HashMap;
-use std::error::Error;
 use std::fmt::Debug;
 #[cfg(not(any(android_platform, ios_platform)))]
 use std::num::NonZeroU32;
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::Arc;
 use std::{fmt, mem};
 
 // use cursor_icon::CursorIcon;
 #[cfg(not(any(android_platform, ios_platform)))]
-use softbuffer::{Context, Surface};
+use softbuffer::{Context, Surface as SoftBufferSurface};
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
 use winit::event::{DeviceEvent, DeviceId, Ime, MouseButton, MouseScrollDelta, WindowEvent};
@@ -551,7 +601,7 @@ struct WindowState {
     ///
     /// NOTE: This surface must be dropped before the `Window`.
     #[cfg(not(any(android_platform, ios_platform)))]
-    surface: Surface<DisplayHandle<'static>, Arc<Window>>,
+    surface: SoftBufferSurface<DisplayHandle<'static>, Arc<Window>>,
     /// The actual winit Window.
     window: Arc<Window>,
     /// The window theme we're drawing with.
@@ -587,7 +637,7 @@ impl WindowState {
         // SAFETY: the surface is dropped before the `window` which provided it with handle, thus
         // it doesn't outlive it.
         #[cfg(not(any(android_platform, ios_platform)))]
-        let surface = Surface::new(app.context.as_ref().unwrap(), Arc::clone(&window))?;
+        let surface = SoftBufferSurface::new(app.context.as_ref().unwrap(), Arc::clone(&window))?;
 
         let theme = window.theme().unwrap_or(Theme::Dark);
         println!("Theme: {theme:?}");
