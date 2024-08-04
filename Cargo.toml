@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # Use latest commit from all
-winit = { git = "https://github.com/rust-windowing/winit.git", features = ["rwh_05", "rwh_06"] }
+winit = { git = "https://github.com/rust-windowing/winit.git" }
 vulkano = { git = "https://github.com/vulkano-rs/vulkano.git" }
 cgmath = { git = "https://github.com/rustgd/cgmath.git" }
 rand = { git = "https://github.com/rust-random/rand.git" }
