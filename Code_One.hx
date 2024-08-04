@@ -11,12 +11,13 @@ class Code_One {
 		var w3:String = './ohio.note';
 
 		clientele('rustup', ['update'], count);
-		clientele('cargo', ['update'], count);
+		var update:Array<Null<Bool>> = [null];
+		clientele('cargo', ['update'], count, update);
 		clientele('cargo', ['fix', '--allow-staged', '--allow-dirty'], count);
 		var build:Array<Null<Bool>> = [null];
 		clientele('cargo', ['build'], count, build);
 
-		if ( build[0] ) {
+		if ( update[0] && build[0] ) {
 
 			var mist = gitcoal(w1);
 			var dome = gitcoal(w2);
