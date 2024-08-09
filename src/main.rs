@@ -79,20 +79,20 @@ struct Flow {
 }
 
 impl ApplicationHandler for Flow {
-    fn new_events(&mut self, _event_loop: &ActiveEventLoop, cause: StartCause) {
+    fn new_events(&mut self, _event_loop: &dyn ActiveEventLoop, cause: StartCause) {
         println!("new_events: {cause:?}");
     }
 
-    fn can_create_surfaces(&mut self, event_loop: &ActiveEventLoop) {
+    fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
         let window_attributes = Window::default_attributes()
-            .with_title("watercloudocean")
+            .with_title("watercloudfall")
             .with_fullscreen(Some(Fullscreen::Borderless(None)));
         self.window = Some(event_loop.create_window(window_attributes).unwrap());
     }
 
     fn window_event(
         &mut self,
-        _event_loop: &ActiveEventLoop,
+        _event_loop: &dyn ActiveEventLoop,
         _window_id: WindowId,
         event: WindowEvent,
     ) {
